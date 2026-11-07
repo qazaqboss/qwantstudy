@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>QwantStudy — квантовая физика в 3D</title>
+  <meta name="description" content="Интерактивный 3D-атлас квантовой физики: понятия, история, голосовой гид и голосовое управление.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><circle cx='32' cy='32' r='6' fill='%2338e8ff'/><ellipse cx='32' cy='32' rx='28' ry='10' fill='none' stroke='%239b6bff' stroke-width='3'/><ellipse cx='32' cy='32' rx='28' ry='10' fill='none' stroke='%23ff4fd8' stroke-width='3' transform='rotate(60 32 32)'/><ellipse cx='32' cy='32' rx='28' ry='10' fill='none' stroke='%2338e8ff' stroke-width='3' transform='rotate(-60 32 32)'/></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;600;800&family=Manrope:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+    }
+  }
+  </script>
+</head>
+<body>
+  <div class="bg-grid" aria-hidden="true"></div>
+
+  <header class="topbar" id="top">
+    <a href="#hero" class="logo" aria-label="QwantStudy — на главную">
+      <span class="logo-mark"><i></i><i></i><i></i></span>
+      <span>Qwant<b>Study</b></span>
+    </a>
+    <nav class="nav" id="nav">
+      <a href="#atlas">3D-атлас</a>
+      <a href="#concepts">Понятия</a>
+      <a href="#history">История</a>
+      <a href="#quiz">Тест</a>
+      <a href="#controls">Управление</a>
+    </nav>
+    <div class="top-actions">
+      <button class="btn ghost small" id="mic-top" title="Голосовые команды (M)"><svg viewBox="0 0 24 24"><path d="M12 15a3 3 0 0 0 3-3V6a3 3 0 1 0-6 0v6a3 3 0 0 0 3 3Zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.9V21h2v-2.1A7 7 0 0 0 19 12h-2Z"/></svg><span>Голос</span></button>
+      <button class="btn primary small" id="tour-top"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg><span>Тур с гидом</span></button>
+      <button class="burger" id="burger" aria-label="Меню"><i></i><i></i></button>
+    </div>
+  </header>
+
+  <!-- ───────────── HERO ───────────── -->
+  <section class="hero" id="hero">
+    <canvas id="hero-canvas"></canvas>
+    <div class="hero-inner">
+      <p class="kicker"><span class="dot"></span> Интерактивный 3D-учебник</p>
+      <h1>Квантовый мир<br><span class="grad">изнутри</span></h1>
+      <p class="lead">Разберите атом на части, как в анатомическом атласе. Посмотрите, как электрон проходит сразу через две щели, и запутайте две частицы. Голосовой гид всё объяснит и покажет сам.</p>
+      <div class="hero-cta">
+        <button class="btn primary big" id="tour-hero"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>Начать тур с гидом</button>
+        <a class="btn ghost big" href="#atlas"><svg viewBox="0 0 24 24"><path d="M12 2 3 7v10l9 5 9-5V7l-9-5Zm0 2.3 6.6 3.7L12 11.7 5.4 8 12 4.3ZM5 9.7l6 3.4v6.6l-6-3.4V9.7Zm8 10v-6.6l6-3.4v6.6l-6 3.4Z"/></svg>Открыть 3D-атлас</a>
+      </div>
+      <ul class="stats">
+        <li><b data-count="6">0</b><span>3D-моделей</span></li>
+        <li><b data-count="38">0</b><span>структур</span></li>
+        <li><b data-count="17">0</b><span>вех истории</span></li>
+        <li><b data-count="21">0</b><span>голосовая команда</span></li>
+      </ul>
+    </div>
+    <a href="#atlas" class="scroll-hint" aria-label="Вниз"><span></span></a>
+  </section>
+
+  <!-- ───────────── АТЛАС ───────────── -->
+  <section class="section atlas-section" id="atlas">
+    <div class="section-head">
+      <p class="kicker"><span class="dot"></span> 3D-атлас</p>
+      <h2>Анатомия микромира</h2>
+      <p>Выберите модель, нажмите на структуру, разнесите части, включите рентген. Мышь: вращение · колесо: масштаб · правая кнопка: сдвиг.</p>
+    </div>
+
+    <div class="atlas" id="atlas-app">
+      <aside class="panel sidebar">
+        <div class="search">
+          <svg viewBox="0 0 24 24"><path d="M10 2a8 8 0 0 1 6.3 12.9l5.4 5.4-1.4 1.4-5.4-5.4A8 8 0 1 1 10 2Zm0 2a6 6 0 1 0 0 12 6 6 0 0 0 0-12Z"/></svg>
+          <input id="search" type="search" placeholder="Поиск структуры…" autocomplete="off">
+        </div>
+        <p class="panel-label">Модели</p>
+        <div class="scene-list" id="scene-list"></div>
+        <div class="parts-head">
+          <p class="panel-label">Структуры</p>
+          <button class="link-btn" id="show-all">Показать все</button>
+        </div>
+        <div class="parts" id="parts"></div>
+      </aside>
+
+      <div class="viewport-wrap" id="viewport-wrap">
+        <div id="viewport" class="viewport"></div>
+        <div class="vp-top">
+          <div class="crumbs"><span>Атлас</span><b id="crumb-scene">Атом</b><em id="crumb-part"></em></div>
+          <div class="vp-badges"><span class="badge live"><i></i>LIVE 3D</span></div>
+        </div>
+        <div class="tooltip" id="tooltip"></div>
+        <div class="loading" id="loading"><div class="spinner"></div><p>Собираем частицы…</p></div>
+
+        <div class="toolbar" id="toolbar">
+          <button data-act="rotate" class="tool on" title="Автовращение (A)"><svg viewBox="0 0 24 24"><path d="M12 4V1L8 5l4 4V6a6 6 0 1 1-6 6H4a8 8 0 1 0 8-8Z"/></svg></button>
+          <button data-act="zoomIn" class="tool" title="Приблизить (+)"><svg viewBox="0 0 24 24"><path d="M11 5h2v6h6v2h-6v6h-2v-6H5v-2h6z"/></svg></button>
+          <button data-act="zoomOut" class="tool" title="Отдалить (−)"><svg viewBox="0 0 24 24"><path d="M5 11h14v2H5z"/></svg></button>
+          <button data-act="reset" class="tool" title="Сброс вида (R)"><svg viewBox="0 0 24 24"><path d="M12 8a4 4 0 1 1 0 8 4 4 0 0 1 0-8Zm-8 3H1v2h3a8 8 0 0 0 7 7v3h2v-3a8 8 0 0 0 7-7h3v-2h-3a8 8 0 0 0-7-7V1h-2v3a8 8 0 0 0-7 7Zm8-5a6 6 0 1 1 0 12 6 6 0 0 1 0-12Z"/></svg></button>
+          <span class="sep"></span>
+          <button data-act="labels" class="tool on" title="Подписи (L)"><svg viewBox="0 0 24 24"><path d="M3 5h12l6 7-6 7H3V5Zm2 2v10h9l4.3-5L14 7H5Z"/></svg></button>
+          <button data-act="xray" class="tool" title="Рентген (X)"><svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm0 2v16a8 8 0 0 1 0-16Z"/></svg></button>
+          <button data-act="wire" class="tool" title="Каркас (W)"><svg viewBox="0 0 24 24"><path d="M12 2 2 7v10l10 5 10-5V7L12 2Zm0 2.2L19.5 8 12 11.8 4.5 8 12 4.2ZM4 9.6l7 3.5v6.6l-7-3.5V9.6Zm9 10.1v-6.6l7-3.5v6.6l-7 3.5Z" fill="none" stroke="currentColor" stroke-width="1.6"/></svg></button>
+          <span class="sep"></span>
+          <label class="slider" title="Разнесение частей (E)">
+            <svg viewBox="0 0 24 24"><path d="M4 4h6v2H7.4l3.3 3.3-1.4 1.4L6 7.4V10H4V4Zm16 0v6h-2V7.4l-3.3 3.3-1.4-1.4L16.6 6H14V4h6ZM4 20v-6h2v2.6l3.3-3.3 1.4 1.4L7.4 18H10v2H4Zm16 0h-6v-2h2.6l-3.3-3.3 1.4-1.4 3.3 3.3V14h2v6Z"/></svg>
+            <input type="range" id="explode" min="0" max="1" step="0.01" value="0">
+          </label>
+          <label class="slider" title="Скорость анимации">
+            <svg viewBox="0 0 24 24"><path d="M12 4a9 9 0 0 0-8 13.1l1.7-1A7 7 0 1 1 19 12h2a9 9 0 0 0-9-8Zm4.2 3.4-5.6 4.2a1.8 1.8 0 1 0 2.5 2.5l3.1-6.7Z"/></svg>
+            <input type="range" id="speed" min="0" max="2" step="0.05" value="1">
+          </label>
+          <span class="sep"></span>
+          <button data-act="shot" class="tool" title="Снимок (P)"><svg viewBox="0 0 24 24"><path d="M9 3 7.2 5H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-3.2L15 3H9Zm3 5a5 5 0 1 1 0 10 5 5 0 0 1 0-10Zm0 2a3 3 0 1 0 0 6 3 3 0 0 0 0-6Z"/></svg></button>
+          <button data-act="full" class="tool" title="Полный экран (F)"><svg viewBox="0 0 24 24"><path d="M4 4h6v2H6v4H4V4Zm10 0h6v6h-2V6h-4V4ZM4 14h2v4h4v2H4v-6Zm14 0h2v6h-6v-2h4v-4Z"/></svg></button>
+        </div>
+
+        <div class="gizmo" aria-hidden="true">
+          <button data-orbit="up">▲</button>
+          <button data-orbit="left">◀</button><span></span><button data-orbit="right">▶</button>
+          <button data-orbit="down">▼</button>
+        </div>
+      </div>
+
+      <aside class="panel info" id="info">
+        <div id="info-body"></div>
+      </aside>
+    </div>
+  </section>
+
+  <!-- ───────────── ПОНЯТИЯ ───────────── -->
+  <section class="section" id="concepts">
+    <div class="section-head">
+      <p class="kicker"><span class="dot"></span> Понятия</p>
+      <h2>Девять идей, которые<br>изменили физику</h2>
+      <p>Нажмите на карточку, чтобы раскрыть объяснение, послушать его или сразу увидеть в 3D.</p>
+    </div>
+    <div class="concepts" id="concept-grid"></div>
+  </section>
+
+  <!-- ───────────── ИСТОРИЯ ───────────── -->
+  <section class="section" id="history">
+    <div class="section-head">
+      <p class="kicker"><span class="dot"></span> История</p>
+      <h2>125 лет квантовой физики</h2>
+      <p>От отчаянной гипотезы Планка до квантовых процессоров. Нажмите ▶, и гид расскажет о каждой вехе.</p>
+    </div>
+    <div class="era-bar" id="era-bar"></div>
+    <div class="timeline" id="timeline"></div>
+  </section>
+
+  <!-- ───────────── ТЕСТ ───────────── -->
+  <section class="section" id="quiz">
+    <div class="section-head">
+      <p class="kicker"><span class="dot"></span> Проверь себя</p>
+      <h2>Квантовый тест</h2>
+      <p>Семь вопросов по атласу и истории. Ответы можно давать голосом: «первый», «второй», «третий», «четвёртый».</p>
+    </div>
+    <div class="quiz panel" id="quiz-box"></div>
+  </section>
+
+  <!-- ───────────── УПРАВЛЕНИЕ ───────────── -->
+  <section class="section" id="controls">
+    <div class="section-head">
+      <p class="kicker"><span class="dot"></span> Управление</p>
+      <h2>Мышь, клавиатура и голос</h2>
+    </div>
+    <div class="controls-grid">
+      <div class="panel ctrl-card">
+        <h3>🖱 Мышь и касания</h3>
+        <ul class="keys">
+          <li><kbd>ЛКМ</kbd> + тянуть<span>вращение</span></li>
+          <li><kbd>Колесо</kbd> / щипок<span>масштаб</span></li>
+          <li><kbd>ПКМ</kbd> + тянуть<span>сдвиг</span></li>
+          <li><kbd>Клик</kbd> по структуре<span>выбор и описание</span></li>
+        </ul>
+      </div>
+      <div class="panel ctrl-card">
+        <h3>⌨ Клавиатура</h3>
+        <ul class="keys">
+          <li><kbd>Пробел</kbd><span>тур: пуск / пауза</span></li>
+          <li><kbd>←</kbd> <kbd>→</kbd><span>шаг тура</span></li>
+          <li><kbd>1</kbd>–<kbd>6</kbd><span>модели</span></li>
+          <li><kbd>X</kbd> <kbd>W</kbd> <kbd>L</kbd><span>рентген, каркас, подписи</span></li>
+          <li><kbd>E</kbd> <kbd>R</kbd> <kbd>A</kbd><span>разнести, сброс, вращение</span></li>
+          <li><kbd>M</kbd> <kbd>F</kbd> <kbd>Esc</kbd><span>микрофон, экран, снять выбор</span></li>
+        </ul>
+      </div>
+      <div class="panel ctrl-card">
+        <h3>🎙 Голосовые команды</h3>
+        <div class="voice-cmds" id="voice-cmds"></div>
+        <p class="muted small" id="sr-note">Нажмите «Голос» и говорите. Распознавание лучше всего работает в Chrome и Edge.</p>
+      </div>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <div class="logo"><span class="logo-mark"><i></i><i></i><i></i></span><span>Qwant<b>Study</b></span></div>
+    <p>Открытый образовательный проект о квантовой физике · 3D: three.js · голос: Web Speech API</p>
+    <a href="#top" class="link-btn">Наверх ↑</a>
+  </footer>
+
+  <!-- ───────────── ГОЛОСОВОЙ ГИД ───────────── -->
+  <div class="guide" id="guide" data-open="false">
+    <button class="guide-orb" id="guide-orb" aria-label="Открыть голосового гида">
+      <span class="orb-core"></span><span class="orb-ring r1"></span><span class="orb-ring r2"></span>
+      <span class="orb-wave" id="orb-wave"><i></i><i></i><i></i><i></i><i></i></span>
+    </button>
+    <div class="guide-panel panel">
+      <div class="guide-head">
+        <div>
+          <p class="panel-label">Голосовой гид · <span id="guide-count">0 / 0</span></p>
+          <h4 id="guide-title">Квантовый гид</h4>
+        </div>
+        <button class="icon-btn" id="guide-close" aria-label="Свернуть">✕</button>
+      </div>
+      <p class="subtitles" id="subtitles">Нажмите ▶, и я проведу вас по 3D-атласу. Можно управлять голосом: скажите «дальше», «назад» или «пауза».</p>
+      <div class="guide-progress" id="guide-progress"></div>
+      <div class="guide-controls">
+        <button class="icon-btn" id="g-prev" title="Назад (←)"><svg viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6 8.5 6V6z"/></svg></button>
+        <button class="icon-btn play" id="g-play" title="Пуск / пауза (Пробел)"><svg class="i-play" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg><svg class="i-pause" viewBox="0 0 24 24"><path d="M6 5h4v14H6zm8 0h4v14h-4z"/></svg></button>
+        <button class="icon-btn" id="g-next" title="Дальше (→)"><svg viewBox="0 0 24 24"><path d="M16 6h2v12h-2zM6 18l8.5-6L6 6z"/></svg></button>
+        <button class="icon-btn" id="g-stop" title="Стоп"><svg viewBox="0 0 24 24"><path d="M6 6h12v12H6z"/></svg></button>
+        <button class="icon-btn" id="g-mic" title="Голосовые команды (M)"><svg viewBox="0 0 24 24"><path d="M12 15a3 3 0 0 0 3-3V6a3 3 0 1 0-6 0v6a3 3 0 0 0 3 3Zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.9V21h2v-2.1A7 7 0 0 0 19 12h-2Z"/></svg></button>
+        <button class="icon-btn" id="g-mute" title="Звук гида"><svg class="i-on" viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3Zm13.5 3A4.5 4.5 0 0 0 14 8v8a4.5 4.5 0 0 0 2.5-4ZM14 3.2v2.1a7 7 0 0 1 0 13.4v2.1a9 9 0 0 0 0-17.6Z"/></svg><svg class="i-off" viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3Zm18.4 3 2-2-1.4-1.4-2 2-2-2-1.4 1.4 2 2-2 2 1.4 1.4 2-2 2 2 1.4-1.4-2-2Z"/></svg></button>
+      </div>
+      <details class="guide-settings">
+        <summary>Настройки голоса</summary>
+        <label>Голос <select id="voice-select"></select></label>
+        <label>Скорость <input type="range" id="voice-rate" min="0.6" max="1.6" step="0.05" value="1"><output id="rate-out">1.0×</output></label>
+        <label class="check"><input type="checkbox" id="auto-advance" checked> Автопереход между шагами</label>
+      </details>
+      <p class="heard" id="heard"></p>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <noscript><p class="noscript">Для 3D-атласа и голосового гида включите JavaScript.</p></noscript>
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
