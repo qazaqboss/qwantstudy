@@ -77,6 +77,7 @@ viewer.addEventListener('scene', e => {
   currentScene = e.detail;
   $$('.scene-btn').forEach(b => b.classList.toggle('active', b.dataset.scene === currentScene.id));
   $('#crumb-scene').textContent = currentScene.def.name;
+  $('#crumb-part').textContent = '';
   renderParts();
   renderInfo(null);
   $('#loading').classList.add('hide');
@@ -166,7 +167,8 @@ function renderInfo(p) {
         <button class="btn ghost small" data-step="-1">← Предыдущая</button>
         <button class="btn ghost small" data-step="1">Следующая →</button>
         <button class="btn ghost small" data-deselect>Вся модель</button>
-      </div>`;
+      </div>
+      ${s.id === 'atom' && ['nucleus', 'protons', 'neutrons'].includes(p.id) ? '<button class="btn primary wide" data-open-scene="nucleus">⚛ Ядро подробно: кварки и глюоны</button>' : ''}`;
   }
 }
 
@@ -176,6 +178,7 @@ $('#info').addEventListener('click', e => {
   if (t.matches('[data-say-scene]')) { const c = CONCEPTS.find(c => c.scene === s.id); say(`${s.def.name}. ${c ? c.text : ''}`); }
   if (t.matches('[data-explode-toggle]')) setExplode(viewer.state.explode > 0.5 ? 0 : 1);
   if (t.dataset.goto) viewer.select(t.dataset.goto);
+  if (t.dataset.openScene) openScene(t.dataset.openScene);
   if (t.matches('[data-say-part]') && p) say(`${p.name}. ${p.desc.replace(/[⁻¹⁵ψ²]/g, ' ')}`);
   if (t.matches('[data-isolate]') && p) { viewer.isolate(p.id); renderParts(); toast('Изолировано · «Показать все» вернёт остальное'); }
   if (t.matches('[data-hide]') && p) { viewer.toggleHidden(p.id); viewer.select(null, { focus: false }); }
@@ -187,7 +190,7 @@ $('#info').addEventListener('click', e => {
 const tip = $('#tooltip');
 viewer.addEventListener('hover', e => {
   const { part, x, y } = e.detail;
-  if (!part) { tip.classList.remove('show'); return; }
+  if (!part || matchMedia('(pointer: coarse)').matches) { tip.classList.remove('show'); return; }
   tip.innerHTML = `<b>${part.name}</b><span>${part.system} · клик для подробностей</span>`;
   tip.style.left = x + 'px'; tip.style.top = y + 'px';
   tip.classList.add('show');
@@ -423,7 +426,7 @@ document.addEventListener('keydown', e => {
   else if (e.key === 'ArrowLeft') { tour.playing ? tour.prev() : inAtlas() && viewer.orbit(-0.3, 0); }
   else if (e.key === 'ArrowUp' && inAtlas()) { e.preventDefault(); viewer.orbit(0, -0.2); }
   else if (e.key === 'ArrowDown' && inAtlas()) { e.preventDefault(); viewer.orbit(0, 0.2); }
-  else if (/^[1-6]$/.test(k)) openScene(SCENES[+k - 1].id);
+  else if (/^[1-7]$/.test(k)) openScene(SCENES[+k - 1].id);
   else if (k === 'x' || k === 'ч') act('xray');
   else if (k === 'w' || k === 'ц') act('wire');
   else if (k === 'l' || k === 'д') act('labels');

@@ -22,10 +22,11 @@
   color-scheme: dark;
 }
 *, *::before, *::after { box-sizing: border-box; }
-html { scroll-behavior: smooth; scroll-padding-top: 76px; }
+html { scroll-behavior: smooth; scroll-padding-top: 76px; overflow-x: hidden; overflow-x: clip; max-width: 100%; }
 body {
-  margin: 0; background: var(--bg); color: var(--text);
-  font: 16px/1.6 var(--f-body); -webkit-font-smoothing: antialiased; overflow-x: hidden;
+  margin: 0; background: var(--bg); color: var(--text); max-width: 100%; position: relative;
+  font: 16px/1.6 var(--f-body); -webkit-font-smoothing: antialiased; overflow-x: hidden; overflow-x: clip;
+  -webkit-text-size-adjust: 100%; overscroll-behavior-x: none;
 }
 body::before {
   content: ''; position: fixed; inset: 0; z-index: -2; pointer-events: none;
@@ -213,7 +214,7 @@ input[type=range]::-moz-range-thumb { width: 14px; height: 14px; border: 0; bord
 .formula { font: 600 1.05rem var(--f-mono); padding: 10px 14px; border-radius: 12px; background: rgba(0, 0, 0, .3); border: 1px dashed var(--line-2); color: var(--gold); display: inline-block; }
 
 /* ─── понятия ─── */
-.concepts { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; }
+.concepts { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(300px, 100%), 1fr)); gap: 16px; }
 .concept { position: relative; padding: 24px; border-radius: var(--radius); overflow: hidden; cursor: pointer; transition: transform .35s, border-color .35s; }
 .concept::before { content: ''; position: absolute; inset: -1px; border-radius: inherit; padding: 1px; background: var(--grad); -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude; opacity: 0; transition: opacity .35s; }
 .concept:hover { transform: translateY(-4px); }
@@ -270,7 +271,7 @@ input[type=range]::-moz-range-thumb { width: 14px; height: 14px; border: 0; bord
 .result .btn { margin-top: 14px; }
 
 /* ─── управление ─── */
-.controls-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
+.controls-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr)); gap: 16px; }
 .ctrl-card { padding: 24px; }
 .ctrl-card h3 { font-size: 1.05rem; margin-bottom: 16px; }
 .keys { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
@@ -358,7 +359,27 @@ input[type=range]::-moz-range-thumb { width: 14px; height: 14px; border: 0; bord
   .hero { align-items: flex-end; }
   .hero-inner { background: linear-gradient(to top, rgba(4, 7, 19, .9) 60%, transparent); padding-top: 40px; }
 }
+@media (max-width: 860px) {
+  /* панель инструментов переносится в две строки вместо горизонтальной прокрутки */
+  .toolbar { flex-wrap: wrap; justify-content: center; overflow: visible; width: calc(100% - 20px); max-width: none; bottom: 10px; gap: 2px; padding: 5px; }
+  .toolbar .sep { display: none; }
+  .tool { width: 36px; height: 36px; }
+  .viewport-wrap { touch-action: none; }
+  .tooltip { display: none; }
+}
 @media (max-width: 520px) {
+  .topbar { gap: 8px; padding: 0 12px; }
+  .logo { font-size: .95rem; gap: 7px; min-width: 0; }
+  .logo-mark { width: 24px; height: 24px; }
+  .top-actions { gap: 6px; margin-left: auto; }
+  .top-actions .btn.small { padding: .5em .7em; }
+  .burger { width: 38px; height: 38px; }
+  .burger i { left: 10px; right: 10px; }
+  .burger i:first-child { top: 14px; } .burger i:last-child { bottom: 14px; }
+  .hero h1 { font-size: clamp(2.1rem, 11vw, 2.6rem); overflow-wrap: anywhere; }
+  .section-head h2 { overflow-wrap: anywhere; }
+  .section { padding-left: 14px; padding-right: 14px; }
+  .stats { gap: 18px; }
   .scene-list { grid-template-columns: 1fr 1fr; }
   .guide { right: 12px; bottom: 12px; }
   .guide-panel { width: calc(100vw - 24px); }
@@ -368,3 +389,5 @@ input[type=range]::-moz-range-thumb { width: 14px; height: 14px; border: 0; bord
   *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
   html { scroll-behavior: auto; }
 }
+
+.btn.wide { width: 100%; justify-content: center; white-space: normal; text-align: center; }

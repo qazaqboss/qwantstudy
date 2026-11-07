@@ -57,7 +57,7 @@ function ring(r, color, tube = 0.012, op = 0.6) {
 function atomScene() {
   const group = new THREE.Group();
   const parts = makeParts([
-    { id: 'nucleus', label: [0, 0.75, 0], name: 'Ядро', system: 'Ядро', color: C.gold, desc: 'Плотный центр атома из нуклонов. Размер ~10⁻¹⁵ м — в 100 000 раз меньше атома, но в нём 99,9% массы.' },
+    { id: 'nucleus', label: [0, 0.75, 0], name: 'Ядро', system: 'Ядро', color: C.gold, desc: 'Плотный центр атома из нуклонов. Размер ~10⁻¹⁵ м — в 100 000 раз меньше атома, но в нём 99,9% массы. Подробное устройство — в модели «Ядро».' },
     { id: 'protons', label: [-0.95, 0.35, 0], name: 'Протоны', system: 'Ядро', color: C.red, desc: 'Положительно заряженные нуклоны, состоят из трёх кварков (uud). Их число задаёт химический элемент.' },
     { id: 'neutrons', label: [0.95, -0.15, 0], name: 'Нейтроны', system: 'Ядро', color: C.blue, desc: 'Нейтральные нуклоны (udd). Удерживаются сильным взаимодействием и определяют изотоп.' },
     { id: 'cloud', label: [0, 1.45, 0], name: '1s-орбиталь', system: 'Электронная оболочка', color: C.cyan, desc: 'Сферическое облако вероятности ближайшего к ядру электрона. Точки показывают, где его вероятнее всего обнаружить.' },
@@ -69,18 +69,17 @@ function atomScene() {
   const P = Object.fromEntries(parts.map(p => [p.id, p]));
 
   // ядро
-  const core = new THREE.Mesh(new THREE.SphereGeometry(0.42, 32, 32), glow(C.gold, 0.25, { opacity: 0.25, depthWrite: false }));
+  const core = new THREE.Mesh(new THREE.SphereGeometry(0.42, 32, 32), glow(C.gold, 0.08, { opacity: 0.1, depthWrite: false }));
   add(group, P.nucleus, core);
   const nucleons = [];
-  for (let i = 0; i < 14; i++) {
+  packNucleons(24, 0.1, 3).forEach((home, i) => {
     const isP = i % 2 === 0;
-    const m = new THREE.Mesh(new THREE.SphereGeometry(0.13, 24, 24), glow(isP ? C.red : C.blue, 0.5));
-    const dir = new THREE.Vector3(gauss(), gauss(), gauss()).normalize().multiplyScalar(0.18 + Math.random() * 0.12);
-    m.position.copy(dir);
-    m.userData.home = dir.clone();
+    const m = new THREE.Mesh(new THREE.SphereGeometry(0.1, 24, 24), glow(isP ? C.red : C.blue, 0.55, { roughness: 0.2 }));
+    m.position.copy(home);
+    m.userData.home = home.clone();
     add(group, isP ? P.protons : P.neutrons, m);
     nucleons.push(m);
-  }
+  });
   P.protons.explode.set(-0.8, 0.4, 0);
   P.neutrons.explode.set(0.8, -0.4, 0);
 
@@ -148,7 +147,169 @@ function atomScene() {
   return { group, parts, update };
 }
 
-/* ─────────────────────── 2. Две щели ─────────────────────── */
+
+/* ─────────── плотная упаковка нуклонов ─────────── */
+function rng(seed) { return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+// Раскладывает n шаров радиуса r в плотный «шарик» ядра: отталкивание + притяжение к центру.
+function packNucleons(n, r, seed = 7) {
+  const rand = rng(seed);
+  const pts = Array.from({ length: n }, () => new THREE.Vector3(rand() - 0.5, rand() - 0.5, rand() - 0.5).multiplyScalar(r * 4));
+  const d = new THREE.Vector3();
+  for (let it = 0; it < 260; it++) {
+    for (let i = 0; i < n; i++) for (let j = i + 1; j < n; j++) {
+      d.subVectors(pts[j], pts[i]); const L = d.length() || 1e-4;
+      if (L < 2 * r * 0.97) { d.multiplyScalar((2 * r * 0.97 - L) / L * 0.5); pts[i].sub(d); pts[j].add(d); }
+    }
+    pts.forEach(p => p.multiplyScalar(0.985));
+  }
+  const c = pts.reduce((a, p) => a.add(p), new THREE.Vector3()).divideScalar(n);
+  pts.forEach(p => p.sub(c));
+  return pts;
+}
+
+/* ─────────────────── 2. Атомное ядро (подробно) ─────────────────── */
+function nucleusScene() {
+  const group = new THREE.Group();
+  const parts = makeParts([
+    { id: 'protons', label: [-1.9, 1.0, 0], name: 'Протоны (12)', system: 'Нуклоны', color: C.red, desc: 'Магний-24: 12 протонов. Протон = u + u + d, заряд +1, масса 938,3 МэВ. Протоны отталкиваются электрически, но сильное взаимодействие в ~100 раз мощнее на расстоянии 1 фм.' },
+    { id: 'neutrons', label: [1.9, -0.7, 0], name: 'Нейтроны (12)', system: 'Нуклоны', color: C.blue, desc: 'Нейтрон = u + d + d, заряд 0, масса 939,6 МэВ. Нейтроны «склеивают» ядро, не добавляя отталкивания. Свободный нейтрон распадается примерно за 15 минут.' },
+    { id: 'uquarks', label: [0, 1.95, 0], name: 'u-кварки', system: 'Кварки', color: C.gold, desc: 'Верхний кварк: заряд +⅔, масса ~2,2 МэВ. Кварки несут «цветной» заряд (красный, зелёный, синий), а нуклон в целом бесцветен.' },
+    { id: 'dquarks', label: [0.4, -1.95, 0], name: 'd-кварки', system: 'Кварки', color: C.green, desc: 'Нижний кварк: заряд −⅓, масса ~4,7 МэВ. Масса трёх кварков — лишь 1% массы нуклона, остальные 99% дают энергия глюонного поля и движение кварков (E = mc²).' },
+    { id: 'gluons', label: [-1.5, -1.5, 0], name: 'Глюонные струны', system: 'Сильное взаимодействие', color: C.violet, desc: 'Глюоны переносят сильное взаимодействие между кварками. Поле стягивается в «струну»: чем дальше кварки, тем сильнее притяжение, поэтому кварк нельзя вырвать по отдельности (конфайнмент).' },
+    { id: 'pions', label: [1.6, 1.5, 0], name: 'Обмен пионами', system: 'Сильное взаимодействие', color: C.pink, desc: 'Между нуклонами действует остаточное сильное взаимодействие: они обмениваются π-мезонами (предсказаны Юкавой в 1935 году). Радиус действия — около 1,4 фм.' },
+    { id: 'field', label: [0, -2.45, 0], name: 'Радиус ядра', system: 'Ядро', color: C.cyan, desc: 'R ≈ 1,2 фм · A^⅓. Для A = 24 это ~3,5 фм. Плотность всех ядер почти одинакова: ~2,3·10¹⁷ кг/м³ — чайная ложка весила бы миллиард тонн.' },
+    { id: 'alpha', label: [3.1, 1.6, 0], name: 'Альфа-частица', system: 'Радиоактивность', color: C.white, desc: 'Ядро гелия (2p + 2n). При альфа-распаде тяжёлых ядер она вылетает, туннелируя сквозь кулоновский барьер — пример квантового туннельного эффекта (Гамов, 1928).' }
+  ]);
+  const P = Object.fromEntries(parts.map(p => [p.id, p]));
+  const R = 0.42;
+  const pos = packNucleons(24, R, 11);
+  // протоны и нейтроны чередуются по расстоянию от центра, чтобы были видны оба цвета
+  const order = pos.map((p, i) => i).sort((a, b) => pos[a].length() - pos[b].length());
+  const nucleons = [];
+  order.forEach((idx, k) => {
+    const isP = k % 2 === 0;
+    const g = new THREE.Group();
+    const shell = new THREE.Mesh(new THREE.SphereGeometry(R * 0.98, 40, 40), glow(isP ? C.red : C.blue, 0.04, { opacity: 0.3, roughness: 0.15, metalness: 0.1 }));
+    const inner = new THREE.Mesh(new THREE.SphereGeometry(R * 0.55, 24, 24), glow(isP ? C.red : C.blue, 0.3, { opacity: 0.18 }));
+    g.add(shell, inner);
+    g.position.copy(pos[idx]);
+    g.userData = { home: pos[idx].clone(), isP, phase: k * 1.37, axis: new THREE.Vector3(Math.sin(k), Math.cos(k * 1.7), Math.sin(k * 2.3)).normalize() };
+    add(group, isP ? P.protons : P.neutrons, g);
+    nucleons.push(g);
+  });
+  P.protons.explode.set(-1.3, 0.5, 0.3); P.neutrons.explode.set(1.3, -0.5, -0.3);
+
+  // кварки: по три в каждом нуклоне
+  const quarks = [];
+  const qGeo = new THREE.SphereGeometry(0.075, 16, 16);
+  nucleons.forEach(n => {
+    const flavors = n.userData.isP ? ['u', 'u', 'd'] : ['u', 'd', 'd'];
+    flavors.forEach((f, j) => {
+      const q = new THREE.Mesh(qGeo, glow(f === 'u' ? C.gold : C.green, 0.7));
+      q.userData = { n, j, f };
+      add(group, f === 'u' ? P.uquarks : P.dquarks, q);
+      quarks.push(q);
+    });
+  });
+
+  // глюонные струны между кварками внутри нуклона
+  const SEG = 14, links = nucleons.length * 3;
+  const gPos = new Float32Array(links * SEG * 2 * 3);
+  const gGeo = new THREE.BufferGeometry(); gGeo.setAttribute('position', new THREE.BufferAttribute(gPos, 3));
+  const gluons = new THREE.LineSegments(gGeo, new THREE.LineBasicMaterial({ color: C.violet, transparent: true, opacity: 0.9 }));
+  add(group, P.gluons, gluons);
+
+  // пионы между соседними нуклонами
+  const pairs = [];
+  for (let i = 0; i < nucleons.length; i++) for (let j = i + 1; j < nucleons.length; j++)
+    if (nucleons[i].userData.home.distanceTo(nucleons[j].userData.home) < R * 2.3) pairs.push([i, j]);
+  const pionG = new THREE.Group();
+  const pions = Array.from({ length: 7 }, (_, k) => {
+    const m = new THREE.Mesh(new THREE.SphereGeometry(0.06, 12, 12), glow(C.pink, 2));
+    const halo = new THREE.Mesh(new THREE.SphereGeometry(0.13, 12, 12), glow(C.pink, 1, { opacity: 0.25, depthWrite: false }));
+    m.add(halo); m.userData = { pair: pairs[(k * 7) % pairs.length], t: k / 7 };
+    pionG.add(m); return m;
+  });
+  add(group, P.pions, pionG);
+
+  // граница ядра + «дымка» сильного поля
+  const fieldG = new THREE.Group();
+  const Rn = pos.reduce((m, p) => Math.max(m, p.length()), 0) + R;
+  const fRing = ring(Rn + 0.05, C.cyan, 0.01, 0.7); fRing.rotation.x = Math.PI / 2;
+  const fRing2 = ring(Rn + 0.05, C.cyan, 0.006, 0.35);
+  const haze = points(1800, v => v.randomDirection().multiplyScalar(Rn * (0.95 + Math.abs(gauss()) * 0.35)), C.cyan, 0.025);
+  haze.material.opacity = 0.35;
+  fieldG.add(fRing, fRing2, haze);
+  add(group, P.field, fieldG);
+
+  // альфа-частица: 2p + 2n вылетают из ядра
+  const alpha = new THREE.Group();
+  [[C.red, 1, 0, 0], [C.red, -1, 0, 0], [C.blue, 0, 1, 0.3], [C.blue, 0, -1, -0.3]].forEach(([c, x, y, z]) => {
+    const m = new THREE.Mesh(new THREE.SphereGeometry(0.14, 20, 20), glow(c, 0.8));
+    m.position.set(x * 0.13, y * 0.13, z * 0.13); alpha.add(m);
+  });
+  const trail = new THREE.Mesh(new THREE.ConeGeometry(0.07, 1.2, 16, 1, true), glow(C.white, 0.4, { opacity: 0.08, depthWrite: false, side: THREE.DoubleSide }));
+  trail.rotation.z = Math.PI / 2; trail.position.x = -0.7; alpha.add(trail);
+  const alphaDir = new THREE.Vector3(1, 0.45, 0.2).normalize();
+  add(group, P.alpha, alpha);
+  P.alpha.explode.set(1, 1, 0);
+
+  const tmp = new THREE.Vector3(), a = new THREE.Vector3(), b = new THREE.Vector3(), perp = new THREE.Vector3(), up = new THREE.Vector3(0, 1, 0);
+  const off = w => w ? w.position : tmp.set(0, 0, 0);
+  function nucleonPos(n, out) { return out.copy(n.position).add(off(n.userData.isP ? P.protons.wrapper : P.neutrons.wrapper)); }
+  function quarkOffset(q, t, out) {
+    const { n, j } = q.userData; const ph = t * 1.8 + n.userData.phase + j * 2.094;
+    out.set(Math.cos(ph) * 0.2, Math.sin(ph * 1.3) * 0.05, Math.sin(ph) * 0.2).applyAxisAngle(n.userData.axis, n.userData.phase);
+    return out;
+  }
+  function update(t) {
+    nucleons.forEach((n, i) => { n.position.copy(n.userData.home).multiplyScalar(1 + 0.025 * Math.sin(t * 2.4 + i)); n.children[1].scale.setScalar(1 + 0.15 * Math.sin(t * 4 + i)); });
+    quarks.forEach(q => {
+      const w = q.userData.f === 'u' ? P.uquarks.wrapper : P.dquarks.wrapper;
+      nucleonPos(q.userData.n, q.position).add(quarkOffset(q, t, a)).sub(off(w));
+    });
+    // струны
+    let k = 0; const gw = off(P.gluons.wrapper);
+    for (let i = 0; i < nucleons.length; i++) {
+      const qs = quarks.slice(i * 3, i * 3 + 3);
+      const c = nucleonPos(nucleons[i], new THREE.Vector3());
+      for (let j = 0; j < 3; j++) {
+        const A = quarkOffset(qs[j], t, new THREE.Vector3()).add(c), B = quarkOffset(qs[(j + 1) % 3], t, new THREE.Vector3()).add(c);
+        perp.subVectors(B, A).cross(up).normalize();
+        for (let s = 0; s < SEG; s++) {
+          for (const u of [s / SEG, (s + 1) / SEG]) {
+            const w = Math.sin(u * Math.PI * 6 - t * 9 + i) * 0.025 * Math.sin(u * Math.PI);
+            b.lerpVectors(A, B, u).addScaledVector(perp, w).sub(gw);
+            gPos[k++] = b.x; gPos[k++] = b.y; gPos[k++] = b.z;
+          }
+        }
+      }
+    }
+    gGeo.attributes.position.needsUpdate = true;
+    // пионы летают между соседями
+    const pw = off(P.pions.wrapper);
+    pions.forEach((m, i) => {
+      const u = (t * 0.7 + m.userData.t) % 1;
+      if (u < 0.02) m.userData.pair = pairs[Math.floor(Math.random() * pairs.length)];
+      const [x, y] = m.userData.pair;
+      nucleonPos(nucleons[x], a); nucleonPos(nucleons[y], b);
+      m.position.lerpVectors(a, b, u).sub(pw); m.position.y += Math.sin(u * Math.PI) * 0.15;
+      m.scale.setScalar(Math.sin(u * Math.PI) + 0.01);
+    });
+    // поле пульсирует
+    haze.rotation.y = t * 0.1; haze.material.opacity = (0.16 + 0.08 * Math.sin(t * 2)) * (haze.material.userData.look ?? 1);
+    // альфа-распад: раз в 7 секунд
+    const c = (t / 7) % 1;
+    const dist = c < 0.15 ? Rn * 0.7 : Rn * 0.7 + (c - 0.15) * 9;
+    alpha.position.copy(alphaDir).multiplyScalar(dist);
+    alpha.quaternion.setFromUnitVectors(new THREE.Vector3(1, 0, 0), alphaDir);
+    alpha.visible = c < 0.75;
+    trail.visible = c > 0.15;
+  }
+  return { group, parts, update };
+}
+
+/* ─────────────────────── 3. Две щели ─────────────────────── */
 function slitScene() {
   const group = new THREE.Group();
   const parts = makeParts([
@@ -513,6 +674,7 @@ function qpuScene() {
 
 export const SCENES = [
   { id: 'atom', name: 'Атом', sub: 'Орбитали и кванты', camera: [6, 4, 9], build: atomScene },
+  { id: 'nucleus', name: 'Ядро', sub: 'Кварки и глюоны', camera: [3.6, 2.4, 5.4], build: nucleusScene },
   { id: 'slit', name: 'Две щели', sub: 'Дуализм', camera: [-4.5, 4.5, 8.5], build: slitScene },
   { id: 'bloch', name: 'Кубит', sub: 'Сфера Блоха', camera: [5.6, 3.4, 7], build: blochScene },
   { id: 'entangle', name: 'Запутанность', sub: 'Пара ЭПР', camera: [0, 3.4, 12], build: entangleScene },
