@@ -1,14 +1,14 @@
 // Фон первого экрана: «квантовое облако» из частиц с орбитами и реакцией на мышь.
 import * as THREE from 'three';
 
-export function initHero(canvas) {
+export function initHero(canvas, light = false) {
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, light ? 1.25 : 1.75));
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(50, 1, 0.1, 100);
   camera.position.set(0, 0, 9);
 
-  const N = 9000;
+  const N = light ? 4000 : 9000;
   const pos = new Float32Array(N * 3), col = new Float32Array(N * 3), seed = new Float32Array(N);
   const c = new THREE.Color();
   for (let i = 0; i < N; i++) {

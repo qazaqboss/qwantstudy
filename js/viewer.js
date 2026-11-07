@@ -19,7 +19,12 @@ export class Viewer extends EventTarget {
     this.hidden = new Set();
 
     const r = this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
-    r.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    const mobile = matchMedia('(pointer: coarse)').matches || innerWidth < 760;
+    this.mobile = mobile;
+    r.setPixelRatio(Math.min(window.devicePixelRatio, mobile ? 1.25 : 1.75));
+    // потеря WebGL-контекста (слабая видеокарта, телефон) — восстанавливаем сцену
+    r.domElement.addEventListener('webglcontextlost', e => { e.preventDefault(); this.lost = true; });
+    r.domElement.addEventListener('webglcontextrestored', () => { this.lost = false; const id = this.current?.id; this.current = null; if (id) this.load(id, { instant: true }); });
     r.toneMapping = THREE.ACESFilmicToneMapping;
     r.outputColorSpace = THREE.SRGBColorSpace;
     container.appendChild(r.domElement);
@@ -43,7 +48,7 @@ export class Viewer extends EventTarget {
 
     this.composer = new EffectComposer(r);
     this.composer.addPass(new RenderPass(this.scene, this.camera));
-    this.bloom = new UnrealBloomPass(new THREE.Vector2(1, 1), 0.85, 0.6, 0.15);
+    this.bloom = new UnrealBloomPass(new THREE.Vector2(1, 1), mobile ? 0.6 : 0.85, 0.6, 0.15);
     this.composer.addPass(this.bloom);
     this.composer.addPass(new OutputPass());
 
@@ -86,7 +91,7 @@ export class Viewer extends EventTarget {
     this.renderer.setSize(w, h);
     this.labelRenderer.setSize(w, h);
     this.composer.setSize(w, h);
-    this.bloom.setSize(w, h);
+    this.bloom.setSize(this.mobile ? w / 2 : w, this.mobile ? h / 2 : h);
     this.camera.aspect = w / h;
     this.camera.updateProjectionMatrix();
   }
@@ -206,6 +211,7 @@ export class Viewer extends EventTarget {
           if (isSel) op = Math.max(op, Math.min(1, b.opacity * 1.0));
           m.opacity = op;
           m.depthWrite = !xray && !dim && b.opacity > 0.9;
+          m.userData.look = isSel ? 1.7 : dim ? 0.4 : 1;
           if ('emissiveIntensity' in m) m.emissiveIntensity = b.emissive * (isSel ? 1.7 : dim ? 0.4 : 1) + (xray ? 0.3 : 0);
           if ('wireframe' in m && o.isMesh) m.wireframe = wire;
         });
@@ -268,7 +274,7 @@ export class Viewer extends EventTarget {
   loop() {
     requestAnimationFrame(this.loop);
     const dt = Math.min(this.clock.getDelta(), 0.05);
-    if (!this.visible) return;
+    if (!this.visible || this.lost) return;
     this.time += dt * this.state.speed;
     if (this.tween) {
       const tw = this.tween; tw.t += dt / tw.dur; const k = ease(Math.min(tw.t, 1));

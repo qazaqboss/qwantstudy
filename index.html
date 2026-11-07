@@ -13,8 +13,8 @@
   <script type="importmap">
   {
     "imports": {
-      "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
-      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+      "three": "./lib/three/build/three.module.js",
+      "three/addons/": "./lib/three/examples/jsm/"
     }
   }
   </script>
@@ -92,7 +92,7 @@
           <div class="vp-badges"><span class="badge live"><i></i>LIVE 3D</span></div>
         </div>
         <div class="tooltip" id="tooltip"></div>
-        <div class="loading" id="loading"><div class="spinner"></div><p>Собираем частицы…</p></div>
+        <div class="loading" id="loading"><div class="spinner"></div><p id="loading-text">Собираем частицы…</p></div>
 
         <div class="toolbar" id="toolbar">
           <button data-act="rotate" class="tool on" title="Автовращение (A)"><svg viewBox="0 0 24 24"><path d="M12 4V1L8 5l4 4V6a6 6 0 1 1-6 6H4a8 8 0 1 0 8-8Z"/></svg></button>
@@ -239,6 +239,24 @@
   <div class="toast" id="toast"></div>
 
   <noscript><p class="noscript">Для 3D-атласа и голосового гида включите JavaScript.</p></noscript>
+  <div class="fail-banner" id="fail-banner" hidden></div>
+  <script>
+    // Проверки до загрузки модулей: file://, старый браузер без import maps, нет WebGL.
+    (function () {
+      var msg = '';
+      if (location.protocol === 'file:') msg = 'Сайт открыт как файл (file://), поэтому браузер блокирует 3D-модули. Запустите локальный сервер: <code>python3 -m http.server 8000</code> и откройте <b>http://localhost:8000</b>, или используйте GitHub Pages.';
+      else if (!(HTMLScriptElement.supports && HTMLScriptElement.supports('importmap'))) msg = 'Ваш браузер устарел и не поддерживает 3D-модули. Обновите Chrome, Edge, Firefox или Safari (16.4+).';
+      else { try { var c = document.createElement('canvas'); if (!(c.getContext('webgl2') || c.getContext('webgl'))) msg = 'В браузере выключен WebGL. Включите аппаратное ускорение в настройках браузера.'; } catch (e) {} }
+      window.__qsFail = function (m) {
+        var b = document.getElementById('fail-banner'); b.innerHTML = '⚠ ' + m + ' <button onclick="this.parentNode.hidden=true">✕</button>'; b.hidden = false;
+        var t = document.getElementById('loading-text'); if (t) t.innerHTML = m;
+        var s = document.querySelector('#loading .spinner'); if (s) s.style.display = 'none';
+      };
+      if (msg) document.addEventListener('DOMContentLoaded', function () { window.__qsFail(msg); });
+      // если модули так и не стартовали
+      setTimeout(function () { if (!window.__qsReady && !msg) window.__qsFail('3D не загрузилось. Обновите страницу (Ctrl+F5); если не помогло, откройте сайт в Chrome или Edge.'); }, 12000);
+    })();
+  </script>
   <script type="module" src="js/main.js"></script>
 </body>
 </html>

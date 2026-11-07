@@ -16,7 +16,7 @@ function toast(msg) {
 }
 
 /* ───────── hero ───────── */
-try { initHero($('#hero-canvas')); } catch (e) { console.warn('WebGL недоступен', e); }
+try { initHero($('#hero-canvas'), matchMedia('(pointer: coarse)').matches || innerWidth < 760); } catch (e) { console.warn('WebGL недоступен', e); }
 $$('[data-count]').forEach(el => {
   const n = +el.dataset.count; let i = 0;
   const step = () => { i = Math.min(n, i + Math.ceil(n / 30)); el.textContent = i; if (i < n) requestAnimationFrame(step); };
@@ -59,7 +59,9 @@ function highlightWord(i) {
 function openGuide(open = true) { guideEl.dataset.open = String(open); }
 
 /* ───────── 3D-атлас ───────── */
-const viewer = new Viewer($('#viewport'));
+let viewer;
+try { viewer = new Viewer($('#viewport')); window.__qsReady = true; }
+catch (e) { console.error(e); window.__qsFail?.('Не удалось запустить 3D (WebGL): ' + e.message + '. Включите аппаратное ускорение или откройте сайт в Chrome/Edge.'); throw e; }
 let currentScene = null;
 
 const sceneList = $('#scene-list');

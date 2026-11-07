@@ -208,9 +208,12 @@ function slitScene() {
   const tex = new THREE.CanvasTexture(cv); tex.colorSpace = THREE.SRGBColorSpace;
   const screen = new THREE.Mesh(new THREE.PlaneGeometry(4, 4), new THREE.MeshStandardMaterial({ map: tex, emissive: 0xffffff, emissiveMap: tex, emissiveIntensity: 1, side: THREE.DoubleSide, transparent: true }));
   screen.rotation.y = -Math.PI / 2; screen.position.x = 3;
+  ctx.fillStyle = '#050816';
   const frame = new THREE.Mesh(new THREE.BoxGeometry(0.06, 4.1, 4.1), glow(C.pink, 0.15, { opacity: 0.4 }));
   frame.position.x = 3.05;
-  const scr = new THREE.Group(); scr.add(screen, frame);
+  const frameEdges = new THREE.LineSegments(new THREE.EdgesGeometry(frame.geometry), new THREE.LineBasicMaterial({ color: C.pink, transparent: true, opacity: 0.7 }));
+  frameEdges.position.copy(frame.position);
+  const scr = new THREE.Group(); scr.add(screen, frameEdges);
   add(group, P.pattern, scr);
   P.pattern.explode.set(1.2, 0, 0);
 
@@ -227,17 +230,18 @@ function slitScene() {
     for (;;) { y = (Math.random() - 0.5) * 2; const I = Math.pow(Math.cos(y * 9), 2) * Math.exp(-y * y * 2.2); if (Math.random() < I) break; }
     const px = 256 + y * 230, py = Math.random() * 512;
     ctx.fillStyle = `hsla(${300 + Math.random() * 40},100%,70%,0.9)`;
-    ctx.beginPath(); ctx.arc(px, py, 1.6, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(px, py, 2.2, 0, Math.PI * 2); ctx.fill();
   }
+  for (let i = 0; i < 2500; i++) hit(); // картина видна сразу
   let acc = 0;
   function update(t, dt) {
     waves.children.forEach((w, i) => {
       const s = ((t * 0.6 + i / 6) % 1) * 3 + 0.2; w.scale.setScalar(s); w.position.x = -3.7; w.material.opacity = 0.7 * (1 - s / 3.2);
     });
     inter.children.forEach(w => { const s = ((t * 0.5 + w.userData.k / 7) % 1) * 4 + 0.1; w.scale.setScalar(s); w.material.opacity = 0.5 * (1 - s / 4.2); });
-    acc += dt * 260;
+    acc += dt * 400;
     while (acc > 1) { hit(); acc--; }
-    if (t % 18 < dt) { ctx.fillStyle = '#050816'; ctx.fillRect(0, 0, 512, 512); }
+    if (t % 20 < dt) { ctx.fillStyle = 'rgba(5,8,22,0.85)'; ctx.fillRect(0, 0, 512, 512); }
     tex.needsUpdate = true;
     eye.scale.setScalar(1 + Math.sin(t * 4) * 0.15);
   }
@@ -297,8 +301,8 @@ function blochScene() {
     const pa = trail.geometry.attributes.position;
     pa.setXYZ(ti % 400, dir.x * R, dir.y * R, dir.z * R); pa.needsUpdate = true; ti++;
     proj.position.set(0, dir.y * R, 0);
-    zero.material.emissiveIntensity = 0.4 + 1.6 * Math.cos(th / 2) ** 2;
-    one.material.emissiveIntensity = 0.4 + 1.6 * Math.sin(th / 2) ** 2;
+    zero.material.emissiveIntensity = (0.4 + 1.6 * Math.cos(th / 2) ** 2) * (zero.material.userData.look ?? 1);
+    one.material.emissiveIntensity = (0.4 + 1.6 * Math.sin(th / 2) ** 2) * (one.material.userData.look ?? 1);
   }
   return { group, parts, update };
 }
@@ -498,20 +502,20 @@ function qpuScene() {
   add(group, P.qubits, qG); add(group, P.couplers, cG);
   P.qubits.explode.set(0, -2.2, 0.4); P.couplers.explode.set(0, -2.2, -0.4);
 
-  group.position.y = 0.2;
+  group.position.y = -0.4;
   function update(t) {
-    qubits.forEach((q, i) => { q.material.emissiveIntensity = 0.5 + 1.2 * (0.5 + 0.5 * Math.sin(t * 3 + i * 1.7)); });
-    cG.children.forEach((c, i) => { c.material.emissiveIntensity = 0.3 + 1.2 * Math.max(0, Math.sin(t * 2 - i * 0.6)); });
-    cab.children.forEach((c, i) => { c.material.emissiveIntensity = 0.4 + 0.8 * Math.max(0, Math.sin(t * 4 - i)); });
+    qubits.forEach((q, i) => { q.material.emissiveIntensity = (0.5 + 1.2 * (0.5 + 0.5 * Math.sin(t * 3 + i * 1.7))) * (q.material.userData.look ?? 1); });
+    cG.children.forEach((c, i) => { c.material.emissiveIntensity = (0.3 + 1.2 * Math.max(0, Math.sin(t * 2 - i * 0.6))) * (c.material.userData.look ?? 1); });
+    cab.children.forEach((c, i) => { c.material.emissiveIntensity = (0.4 + 0.8 * Math.max(0, Math.sin(t * 4 - i))) * (c.material.userData.look ?? 1); });
   }
   return { group, parts, update };
 }
 
 export const SCENES = [
   { id: 'atom', name: 'Атом', sub: 'Орбитали и кванты', camera: [6, 4, 9], build: atomScene },
-  { id: 'slit', name: 'Две щели', sub: 'Дуализм', camera: [3, 5, 12], build: slitScene },
+  { id: 'slit', name: 'Две щели', sub: 'Дуализм', camera: [-4.5, 4.5, 8.5], build: slitScene },
   { id: 'bloch', name: 'Кубит', sub: 'Сфера Блоха', camera: [5.6, 3.4, 7], build: blochScene },
   { id: 'entangle', name: 'Запутанность', sub: 'Пара ЭПР', camera: [0, 3.4, 12], build: entangleScene },
   { id: 'tunnel', name: 'Туннель', sub: 'Сквозь барьер', camera: [2.5, 6, 9.5], build: tunnelScene },
-  { id: 'qpu', name: 'Компьютер', sub: 'Криостат и чип', camera: [6, 3, 8.5], build: qpuScene }
+  { id: 'qpu', name: 'Компьютер', sub: 'Криостат и чип', camera: [7, 2.5, 10], build: qpuScene }
 ];
