@@ -12,7 +12,7 @@ def check(path, ref):
     segs, _ = m.transcribe(load16(path), language="ru", beam_size=1)
     hyp = " ".join(s.text for s in segs)
     r, h = norm(ref), norm(hyp)
-    return 1 - difflib.SequenceMatcher(None, r, h).ratio(), hyp
+    return 1 - difflib.SequenceMatcher(None, r, h, autojunk=False).ratio(), hyp
 if __name__ == "__main__":
     texts = {x["key"]: x["spoken"] for x in json.load(open(sys.argv[1]))}
     base = os.path.join(os.path.dirname(__file__), "..", "audio", "voice")

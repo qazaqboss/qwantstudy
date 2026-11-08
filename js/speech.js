@@ -57,7 +57,7 @@ export function spoken(text) {
     .replace(/(\d+)–(\d+)\s*ГГц/g, 'от $1 до $2 гигагерц').replace(/(\d+)\s*МэВ/g, '$1 мегаэлектронвольт')
     .replace(/(\d+(?:,\d+)?)\s*фм(?![а-яё])/g, '$1 фемтометра').replace(/1,4 фемтометра/g, 'одна и четыре десятых фемтометра');
   for (const [a, b] of SYMBOLS) s = s.split(a).join(b);
-  return s.replace(/\s+([,.;:!?])/g, '$1').replace(/(,\s*)+/g, ', ').replace(/,\s*([.;:!?])/g, '$1').replace(/\s{2,}/g, ' ').trim();
+  return s.replace(/\s+([,.;:!?])/g, '$1').replace(/,(\s*,)+/g, ',').replace(/,(?=[^\s\d])/g, ', ').replace(/,\s*([.;:!?])/g, '$1').replace(/\s{2,}/g, ' ').trim();
 }
 
 // Ключ аудиофайла: короткий хеш произносимого текста (FNV-1a, 32 бита).
