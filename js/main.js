@@ -5,6 +5,7 @@ import { CONCEPTS, HISTORY, QUIZ, TOUR } from './data.js';
 import { Voice, Tour, createListener, parseCommand, COMMANDS } from './guide.js';
 import { initHero } from './hero.js';
 import { sceneText, partText, conceptText, historyText, quizText } from './speech.js';
+import { YEARS, STAGES } from './course-data.js';
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -235,6 +236,14 @@ $$('.gizmo [data-orbit]').forEach(b => b.addEventListener('click', () => {
 }));
 
 viewer.load('atom', { instant: true });
+// переход из курса: открыть модель урока
+try {
+  const want = JSON.parse(sessionStorage.getItem('qs-open-scene') || 'null');
+  if (want) { sessionStorage.removeItem('qs-open-scene'); setTimeout(() => { $('#atlas').scrollIntoView(); openScene(want.scene, want.part); }, 300); }
+} catch { /* нет хранилища */ }
+
+/* ───────── курс (анонс) ───────── */
+$('#promo-years').innerHTML = YEARS.map(y => { const st = STAGES.find(s => s.years.includes(y.n)); return `<a class="promo-year panel reveal" href="course.html#${y.lessons[0].id}" style="--c:${st.color}"><span class="yn">${y.n}</span><b>${y.title}</b><em>${y.lessons.length} уроков</em></a>`; }).join('');
 
 /* ───────── понятия ───────── */
 $('#concept-grid').innerHTML = CONCEPTS.map((c, i) => `

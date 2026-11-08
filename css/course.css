@@ -1,0 +1,93 @@
+/* Страница курса на 12 лет */
+.course-hero { max-width: 1480px; margin: 0 auto; padding: 110px clamp(16px, 4vw, 56px) 20px; display: grid; grid-template-columns: 1fr 420px; gap: 32px; align-items: center; }
+.course-hero h1 { font-size: clamp(2.2rem, 5vw, 4rem); font-weight: 800; margin-bottom: 1rem; }
+.ch-progress { padding: 24px; display: flex; gap: 22px; align-items: center; }
+.ring { position: relative; width: 120px; height: 120px; flex: none; }
+.ring svg { width: 120px; height: 120px; transform: rotate(-90deg); }
+.ring circle { fill: none; stroke-width: 10; }
+.ring .track { stroke: var(--line); }
+.ring .bar { stroke: url(#none); stroke: var(--cyan); stroke-linecap: round; stroke-dasharray: 0 400; transition: stroke-dasharray .8s; filter: drop-shadow(0 0 6px var(--cyan)); }
+.ring b { position: absolute; inset: 0; display: grid; place-items: center; font: 800 1.5rem var(--f-display); }
+.ch-stats { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 12px 18px; }
+.ch-stats b { display: block; font: 800 1.5rem var(--f-display); }
+.ch-stats span { color: var(--muted); font-size: .8rem; }
+
+.years-wrap { max-width: 1480px; margin: 0 auto; padding: 20px clamp(16px, 4vw, 56px); display: grid; gap: 18px; }
+#stages { display: grid; gap: 18px; }
+.stage-head { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
+.stage-head i { width: 10px; height: 10px; border-radius: 50%; background: var(--c); box-shadow: 0 0 12px var(--c); }
+.stage-head b { font-family: var(--f-display); font-size: 1rem; }
+.stage-head span { color: var(--muted); font-size: .85rem; }
+.year-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+.year-card { position: relative; text-align: left; padding: 14px 14px 12px 70px; min-height: 92px; border-radius: 16px; border: 1px solid var(--line); background: var(--panel); backdrop-filter: blur(12px); transition: .2s; overflow: hidden; }
+.year-card:hover { border-color: var(--c); transform: translateY(-2px); }
+.year-card.active { border-color: var(--c); box-shadow: 0 0 0 1px var(--c), 0 10px 40px -16px var(--c); }
+.year-card .yn { position: absolute; left: 14px; top: 12px; font: 800 1.9rem/1 var(--f-display); color: var(--c); text-shadow: 0 0 18px color-mix(in srgb, var(--c) 60%, transparent); }
+.year-card .yl { position: absolute; left: 14px; top: 46px; font: 600 .62rem var(--f-mono); letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
+.year-card b { display: block; font-size: .95rem; line-height: 1.25; }
+.year-card em { display: block; font-style: normal; color: var(--muted); font-size: .76rem; margin-top: 4px; }
+.year-card .ybar { position: absolute; left: 0; right: 0; bottom: 0; height: 3px; background: var(--line); }
+.year-card .ybar i { display: block; height: 100%; background: var(--c); transition: width .6s; }
+.year-card.done::after { content: '✓'; position: absolute; right: 12px; top: 10px; color: var(--c); font-weight: 800; }
+
+.course-work { max-width: 1680px; margin: 0 auto; padding: 20px clamp(16px, 4vw, 56px) 40px; scroll-margin-top: 70px; }
+.course-atlas { grid-template-columns: 300px 1fr 400px; }
+.year-title { font-size: 1.25rem; margin: 8px 0 6px; }
+.year-bar { height: 5px; border-radius: 5px; background: var(--line); overflow: hidden; margin: 12px 0 14px; }
+.year-bar i { display: block; height: 100%; background: var(--grad); transition: width .6s; }
+.lessons { flex: 1; overflow-y: auto; display: grid; align-content: start; gap: 6px; margin-right: -6px; padding-right: 6px; scrollbar-width: thin; }
+.lesson-row { display: flex; gap: 10px; align-items: flex-start; text-align: left; padding: 10px; border-radius: 12px; border: 1px solid transparent; background: rgba(255, 255, 255, .02); transition: .15s; }
+.lesson-row:hover { background: rgba(255, 255, 255, .05); }
+.lesson-row.active { border-color: rgba(56, 232, 255, .45); background: rgba(56, 232, 255, .1); }
+.lesson-row .ln { width: 28px; height: 28px; border-radius: 9px; display: grid; place-items: center; flex: none; font: 600 .8rem var(--f-mono); border: 1px solid var(--line-2); }
+.lesson-row.done .ln { background: var(--green); color: #04130c; border-color: var(--green); }
+.lesson-row .lt b { display: block; font-size: .9rem; }
+.lesson-row .lt em { display: block; font-style: normal; font-size: .74rem; color: var(--muted); font-family: var(--f-mono); }
+
+.lesson { gap: 0; }
+.lesson-head { display: flex; gap: 8px; flex-wrap: wrap; }
+.chip.ok { color: var(--green); border-color: rgba(77, 255, 176, .4); }
+.lesson-title { font-size: 1.45rem; margin: 12px 0 12px; }
+.lesson .formula { margin-bottom: 4px; font-size: .95rem; overflow-wrap: anywhere; }
+.lesson-text { font-size: .98rem; line-height: 1.65; color: #b8c4ec; }
+.lesson-text .w { transition: color .15s, text-shadow .15s; }
+.lesson-text .w.said { color: var(--text); }
+.lesson-text .w.now { color: var(--cyan); text-shadow: 0 0 12px rgba(56, 232, 255, .7); }
+.lesson .i-pause { display: none; }
+.lesson.playing .i-play { display: none; }
+.lesson.playing .i-pause { display: block; }
+.lesson .sub { margin: 16px 0 8px; font: 600 .7rem var(--f-mono); letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
+.points { margin: 0; padding-left: 18px; display: grid; gap: 6px; font-size: .92rem; color: #c3cdf0; }
+.points li::marker { color: var(--cyan); }
+.lq-q { font-weight: 700; margin: 0 0 10px; }
+.lq .opt { padding: 10px 12px; font-size: .92rem; }
+.lq .opts { gap: 8px; }
+.lesson-nav { display: flex; justify-content: space-between; margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--line); }
+
+.promo-years { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; }
+.promo-year { position: relative; padding: 14px; border-radius: 16px; min-height: 104px; transition: .2s; }
+.promo-year:hover { transform: translateY(-3px); border-color: var(--c); }
+.promo-year .yn { font: 800 1.6rem/1 var(--f-display); color: var(--c); display: block; margin-bottom: 6px; }
+.promo-year b { display: block; font-size: .88rem; line-height: 1.25; }
+.promo-year em { font-style: normal; font-size: .74rem; color: var(--muted); }
+
+@media (max-width: 1200px) {
+  .course-hero { grid-template-columns: 1fr; }
+  .course-atlas { grid-template-columns: 260px 1fr; }
+  .course-atlas .lesson { grid-column: 1 / -1; }
+  .year-grid { grid-template-columns: repeat(2, 1fr); }
+  .promo-years { grid-template-columns: repeat(3, 1fr); }
+}
+@media (max-width: 860px) {
+  .course-atlas { grid-template-columns: 1fr; }
+  .course-atlas .sidebar { max-height: 340px; }
+  .ch-progress { flex-direction: column; align-items: flex-start; }
+}
+@media (max-width: 520px) {
+  .course-hero { padding-left: 14px; padding-right: 14px; }
+  .years-wrap, .course-work { padding-left: 14px; padding-right: 14px; }
+  .year-card { padding-left: 62px; }
+  .year-card .yn { font-size: 1.55rem; }
+  .promo-years { grid-template-columns: repeat(2, 1fr); }
+  .lesson-title { font-size: 1.25rem; }
+}

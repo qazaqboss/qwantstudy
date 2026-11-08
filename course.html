@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Курс квантовой физики на 12 лет — QwantStudy</title>
+  <meta name="description" content="Курс квантовой физики на 12 лет: от атомов и света до матриц, операторов и квантовых алгоритмов. 3D-модели в стиле анатомического атласа и голосовой гид.">
+  <meta name="theme-color" content="#040713">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="QwantStudy">
+  <meta property="og:title" content="QwantStudy — курс квантовой физики на 12 лет">
+  <meta property="og:description" content="53 урока с 3D-моделями и голосом: от атомов до матриц Паули и алгоритма Шора.">
+  <meta property="og:image" content="/og-image.jpg">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><circle cx='32' cy='32' r='6' fill='%2338e8ff'/><ellipse cx='32' cy='32' rx='28' ry='10' fill='none' stroke='%239b6bff' stroke-width='3'/><ellipse cx='32' cy='32' rx='28' ry='10' fill='none' stroke='%23ff4fd8' stroke-width='3' transform='rotate(60 32 32)'/><ellipse cx='32' cy='32' rx='28' ry='10' fill='none' stroke='%2338e8ff' stroke-width='3' transform='rotate(-60 32 32)'/></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;600;800&family=Manrope:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/course.css">
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "./lib/three/build/three.module.js",
+      "three/addons/": "./lib/three/examples/jsm/"
+    }
+  }
+  </script>
+</head>
+<body class="course-page">
+  <div class="bg-grid" aria-hidden="true"></div>
+
+  <header class="topbar" id="top">
+    <a href="index.html" class="logo" aria-label="QwantStudy — на главную">
+      <span class="logo-mark"><i></i><i></i><i></i></span>
+      <span>Qwant<b>Study</b></span>
+    </a>
+    <nav class="nav" id="nav">
+      <a href="index.html#atlas">3D-атлас</a>
+      <a href="course.html" class="active">Курс 12 лет</a>
+      <a href="index.html#concepts">Понятия</a>
+      <a href="index.html#history">История</a>
+      <a href="index.html#quiz">Тест</a>
+    </nav>
+    <div class="top-actions">
+      <button class="btn primary small" id="lecture-top"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg><span>Лекция подряд</span></button>
+      <button class="burger" id="burger" aria-label="Меню"><i></i><i></i></button>
+    </div>
+  </header>
+
+  <section class="course-hero">
+    <div class="ch-text">
+      <p class="kicker"><span class="dot"></span> Квантовый курс</p>
+      <h1>12 лет — от атома<br><span class="grad">до матрицы</span></h1>
+      <p class="lead">Пошаговая программа: от «из чего всё сделано» до операторов, матриц Паули, запутанности и квантовых алгоритмов. Каждый урок — с 3D-моделью в стиле анатомического атласа и голосом гида.</p>
+      <div class="hero-cta">
+        <button class="btn primary big" id="continue"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg><span>Начать обучение</span></button>
+        <button class="btn ghost big" id="lecture"><svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3Zm13.5 3A4.5 4.5 0 0 0 14 8v8a4.5 4.5 0 0 0 2.5-4Z"/></svg>Слушать лекцию подряд</button>
+      </div>
+    </div>
+    <div class="ch-progress panel">
+      <div class="ring" id="ring"><svg viewBox="0 0 120 120"><circle cx="60" cy="60" r="52" class="track"/><circle cx="60" cy="60" r="52" class="bar" id="ring-bar"/></svg><b id="ring-pct">0%</b></div>
+      <ul class="ch-stats">
+        <li><b id="st-done">0</b><span>уроков пройдено</span></li>
+        <li><b id="st-total">0</b><span>уроков в курсе</span></li>
+        <li><b>14</b><span>3D-моделей</span></li>
+        <li><b>12</b><span>лет программы</span></li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="years-wrap">
+    <div id="stages"></div>
+  </section>
+
+  <section class="course-work" id="work">
+    <div class="atlas course-atlas">
+      <aside class="panel sidebar">
+        <p class="panel-label" id="year-label">Год 1</p>
+        <h3 class="year-title" id="year-title"></h3>
+        <p class="muted small" id="year-goal"></p>
+        <div class="year-bar"><i id="year-bar"></i></div>
+        <div class="lessons" id="lessons"></div>
+      </aside>
+
+      <div class="viewport-wrap" id="viewport-wrap">
+        <div id="viewport" class="viewport"></div>
+        <div class="vp-top">
+          <div class="crumbs"><span>Курс</span><b id="crumb-scene">—</b><em id="crumb-part"></em></div>
+          <div class="vp-badges"><span class="badge live"><i></i>LIVE 3D</span></div>
+        </div>
+        <div class="loading" id="loading"><div class="spinner"></div><p id="loading-text">Собираем частицы…</p></div>
+        <div class="toolbar" id="toolbar">
+          <button data-act="rotate" class="tool on" title="Автовращение"><svg viewBox="0 0 24 24"><path d="M12 4V1L8 5l4 4V6a6 6 0 1 1-6 6H4a8 8 0 1 0 8-8Z"/></svg></button>
+          <button data-act="zoomIn" class="tool" title="Приблизить"><svg viewBox="0 0 24 24"><path d="M11 5h2v6h6v2h-6v6h-2v-6H5v-2h6z"/></svg></button>
+          <button data-act="zoomOut" class="tool" title="Отдалить"><svg viewBox="0 0 24 24"><path d="M5 11h14v2H5z"/></svg></button>
+          <button data-act="reset" class="tool" title="Сброс вида"><svg viewBox="0 0 24 24"><path d="M12 8a4 4 0 1 1 0 8 4 4 0 0 1 0-8Zm-8 3H1v2h3a8 8 0 0 0 7 7v3h2v-3a8 8 0 0 0 7-7h3v-2h-3a8 8 0 0 0-7-7V1h-2v3a8 8 0 0 0-7 7Zm8-5a6 6 0 1 1 0 12 6 6 0 0 1 0-12Z"/></svg></button>
+          <span class="sep"></span>
+          <button data-act="labels" class="tool on" title="Подписи"><svg viewBox="0 0 24 24"><path d="M3 5h12l6 7-6 7H3V5Zm2 2v10h9l4.3-5L14 7H5Z"/></svg></button>
+          <button data-act="xray" class="tool" title="Рентген"><svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm0 2v16a8 8 0 0 1 0-16Z"/></svg></button>
+          <label class="slider" title="Разнесение частей">
+            <svg viewBox="0 0 24 24"><path d="M4 4h6v2H7.4l3.3 3.3-1.4 1.4L6 7.4V10H4V4Zm16 0v6h-2V7.4l-3.3 3.3-1.4-1.4L16.6 6H14V4h6ZM4 20v-6h2v2.6l3.3-3.3 1.4 1.4L7.4 18H10v2H4Zm16 0h-6v-2h2.6l-3.3-3.3 1.4-1.4 3.3 3.3V14h2v6Z"/></svg>
+            <input type="range" id="explode" min="0" max="1" step="0.01" value="0">
+          </label>
+          <button data-act="full" class="tool" title="Полный экран"><svg viewBox="0 0 24 24"><path d="M4 4h6v2H6v4H4V4Zm10 0h6v6h-2V6h-4V4ZM4 14h2v4h4v2H4v-6Zm14 0h2v6h-6v-2h4v-4Z"/></svg></button>
+        </div>
+      </div>
+
+      <article class="panel info lesson" id="lesson"></article>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <div class="logo"><span class="logo-mark"><i></i><i></i><i></i></span><span>Qwant<b>Study</b></span></div>
+    <p>Некоммерческий учебный курс · 3D: three.js · голос гида: <a href="https://huggingface.co/k2-fsa/OmniVoice" target="_blank" rel="noopener">OmniVoice</a> (k2-fsa, CC BY-NC 4.0), озвучено с помощью <a href="https://github.com/debpalash/VoiceStudio" target="_blank" rel="noopener">VoiceStudio</a></p>
+    <a href="index.html" class="link-btn">← На главную</a>
+  </footer>
+
+  <div class="toast" id="toast"></div>
+  <div class="fail-banner" id="fail-banner" hidden></div>
+  <script>
+    (function () {
+      var msg = '';
+      if (location.protocol === 'file:') msg = 'Сайт открыт как файл (file://), поэтому браузер блокирует 3D-модули. Запустите локальный сервер: <code>python3 -m http.server 8000</code> и откройте <b>http://localhost:8000/course.html</b>.';
+      else if (!(HTMLScriptElement.supports && HTMLScriptElement.supports('importmap'))) msg = 'Ваш браузер устарел и не поддерживает 3D-модули. Обновите браузер.';
+      window.__qsFail = function (m) {
+        var b = document.getElementById('fail-banner'); b.innerHTML = '⚠ ' + m + ' <button onclick="this.parentNode.hidden=true">✕</button>'; b.hidden = false;
+        var t = document.getElementById('loading-text'); if (t) t.innerHTML = m;
+      };
+      if (msg) document.addEventListener('DOMContentLoaded', function () { window.__qsFail(msg); });
+    })();
+  </script>
+  <script type="module" src="js/course.js"></script>
+</body>
+</html>
