@@ -1,3 +1,4 @@
+import { spoken, clipKey } from './speech.js';
 // Голосовой гид: озвучка (Web Speech Synthesis), тур по атласу и голосовые команды (Speech Recognition).
 
 export class Voice {
@@ -8,11 +9,15 @@ export class Voice {
     this.pitch = 1;
     this.muted = false;
     this.voices = [];
+    // Естественный голос: заранее озвученные моделью OmniVoice фразы (audio/voice/*.mp3).
+    this.clips = {};
+    this.natural = localStorageGet('qs-voice') !== 'browser' || !this.synth;
+    this.ready = fetch('audio/voice/manifest.json').then(r => r.ok ? r.json() : {}).then(m => { this.clips = m; this.onvoices?.(this.voices); }).catch(() => {});
     if (this.synth) {
       const load = () => {
         this.voices = this.synth.getVoices().filter(v => /^ru/i.test(v.lang));
         if (!this.voices.length) this.voices = this.synth.getVoices();
-        const saved = localStorageGet('qs-voice');
+        const saved = localStorageGet('qs-browser-voice');
         this.voice = this.voices.find(v => v.name === saved)
           || this.voices.find(v => /ru/i.test(v.lang) && /google|milena|irina|svetlana|natural|online/i.test(v.name))
           || this.voices[0] || null;
@@ -22,30 +27,63 @@ export class Voice {
       this.synth.addEventListener?.('voiceschanged', load);
     }
   }
-  get supported() { return !!this.synth; }
-  setVoice(name) { this.voice = this.voices.find(v => v.name === name) || this.voice; localStorageSet('qs-voice', name); }
+  get supported() { return !!this.synth || Object.keys(this.clips).length > 0; }
+  get hasNatural() { return Object.keys(this.clips).length > 0; }
+  setVoice(name) {
+    if (name === '__natural') { this.natural = true; localStorageSet('qs-voice', 'natural'); return; }
+    this.natural = false; localStorageSet('qs-voice', 'browser');
+    this.voice = this.voices.find(v => v.name === name) || this.voice; localStorageSet('qs-browser-voice', name);
+  }
+  clipFor(text) { const k = clipKey(text); return this.natural && this.clips[k] ? `audio/voice/${k}.mp3` : null; }
+  preload(text) { const src = text && this.clipFor(text); if (src) { const a = new Audio(); a.preload = 'auto'; a.src = src; } }
 
-  // Озвучивает текст; onboundary отдаёт индекс текущего слова для подсветки субтитров.
+  // Озвучивает текст; onword отдаёт индекс текущего слова для подсветки субтитров.
   speak(text, { onend, onword } = {}) {
     this.stop();
-    if (!this.synth || this.muted) {
-      // без озвучки — имитируем время чтения, чтобы тур шёл дальше
-      const words = text.split(/\s+/);
+    const words = text.split(/\s+/).filter(Boolean);
+    if (this.muted) {
+      // без звука — имитируем время чтения, чтобы тур шёл дальше
       let i = 0;
-      this._timer = setInterval(() => {
-        onword?.(i++);
-        if (i > words.length) { clearInterval(this._timer); onend?.(); }
-      }, 330 / this.rate);
+      this._timer = setInterval(() => { onword?.(i++); if (i > words.length) { clearInterval(this._timer); onend?.(); } }, 330 / this.rate);
       return;
     }
-    const u = new SpeechSynthesisUtterance(text);
+    const src = this.clipFor(text);
+    if (src) return this.playClip(src, text, words, onend, onword);
+    this.speakBrowser(text, words, onend, onword);
+  }
+
+  playClip(src, text, words, onend, onword) {
+    const a = new Audio(src);
+    a.playbackRate = this.rate; a.preservesPitch = true;
+    this._audio = a;
+    // слово по доле прочитанных символов
+    const cum = []; let acc = 0; words.forEach(w => { acc += w.length + 1; cum.push(acc); });
+    let last = -1;
+    const tick = () => {
+      if (this._audio !== a) return;
+      if (a.duration) {
+        const pos = (a.currentTime / a.duration) * acc;
+        const idx = cum.findIndex(c => c >= pos);
+        if (idx !== last) { last = idx; onword?.(idx); }
+      }
+      if (!a.paused && !a.ended) this._raf = requestAnimationFrame(tick);
+    };
+    a.addEventListener('play', () => { cancelAnimationFrame(this._raf); tick(); });
+    a.addEventListener('ended', () => { if (this._audio === a) { this._audio = null; onword?.(words.length); onend?.(); } });
+    a.addEventListener('error', () => { if (this._audio === a) { this._audio = null; this.speakBrowser(text, words, onend, onword); } });
+    a.play().catch(() => { if (this._audio === a) { this._audio = null; this.speakBrowser(text, words, onend, onword); } });
+  }
+
+  speakBrowser(text, words, onend, onword) {
+    if (!this.synth) { onend?.(); return; }
+    const say = spoken(text);
+    const u = new SpeechSynthesisUtterance(say);
     u.lang = this.voice?.lang || 'ru-RU';
     if (this.voice) u.voice = this.voice;
     u.rate = this.rate; u.pitch = this.pitch;
     u.onboundary = e => {
       if (e.name && e.name !== 'word') return;
-      const idx = text.slice(0, e.charIndex).split(/\s+/).filter(Boolean).length;
-      onword?.(idx);
+      onword?.(Math.round(e.charIndex / say.length * words.length));
     };
     u.onend = () => { if (this._u === u) onend?.(); };
     this._u = u;
@@ -54,14 +92,17 @@ export class Voice {
     this._keep = setInterval(() => { if (this.synth.speaking && !this.synth.paused) { this.synth.pause(); this.synth.resume(); } }, 10000);
     this.synth.speak(u);
   }
-  pause() { this.synth?.pause(); }
-  resume() { this.synth?.resume(); }
+  setRate(r) { this.rate = r; if (this._audio) this._audio.playbackRate = r; }
+  pause() { if (this._audio) this._audio.pause(); else this.synth?.pause(); }
+  resume() { if (this._audio) this._audio.play(); else this.synth?.resume(); }
+  get canResume() { return (this._audio && this._audio.paused && !this._audio.ended) || !!(this.synth?.paused && this.synth?.speaking); }
   stop() {
-    clearInterval(this._timer); clearInterval(this._keep);
+    clearInterval(this._timer); clearInterval(this._keep); cancelAnimationFrame(this._raf);
+    if (this._audio) { this._audio.pause(); this._audio = null; }
     this._u = null;
     this.synth?.cancel();
   }
-  get speaking() { return !!this.synth?.speaking; }
+  get speaking() { return !!(this._audio && !this._audio.paused) || !!this.synth?.speaking; }
 }
 
 export class Tour extends EventTarget {
@@ -77,6 +118,7 @@ export class Tour extends EventTarget {
     this.index = i;
     const step = this.steps[i];
     this.dispatchEvent(new CustomEvent('step', { detail: { step, index: i, total: this.steps.length } }));
+    this.voice.preload(this.steps[i + 1]?.text);
     this.voice.speak(step.text, {
       onword: w => this.dispatchEvent(new CustomEvent('word', { detail: w })),
       onend: () => {
@@ -89,7 +131,7 @@ export class Tour extends EventTarget {
   prev() { clearTimeout(this._next); if (!this.playing) this.playing = true; this.paused = false; this.go(Math.max(0, this.index - 1)); }
   toggle() {
     if (!this.playing) return this.start(this.index < 0 || this.index >= this.steps.length - 1 ? 0 : this.index);
-    if (this.paused) { this.paused = false; this.voice.speaking ? this.voice.resume() : this.go(this.index); }
+    if (this.paused) { this.paused = false; this.voice.canResume ? this.voice.resume() : this.go(this.index); }
     else { this.paused = true; this.voice.pause(); clearTimeout(this._next); }
     this.dispatchEvent(new Event('state'));
   }

@@ -4,6 +4,7 @@ import { SCENES } from './scenes.js';
 import { CONCEPTS, HISTORY, QUIZ, TOUR } from './data.js';
 import { Voice, Tour, createListener, parseCommand, COMMANDS } from './guide.js';
 import { initHero } from './hero.js';
+import { sceneText, partText, conceptText, historyText, quizText } from './speech.js';
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -175,11 +176,11 @@ function renderInfo(p) {
 $('#info').addEventListener('click', e => {
   const t = e.target.closest('button'); if (!t) return;
   const s = currentScene; const p = viewer.part(viewer.selected);
-  if (t.matches('[data-say-scene]')) { const c = CONCEPTS.find(c => c.scene === s.id); say(`${s.def.name}. ${c ? c.text : ''}`); }
+  if (t.matches('[data-say-scene]')) { const c = CONCEPTS.find(c => c.scene === s.id); say(sceneText(s.def, c)); }
   if (t.matches('[data-explode-toggle]')) setExplode(viewer.state.explode > 0.5 ? 0 : 1);
   if (t.dataset.goto) viewer.select(t.dataset.goto);
   if (t.dataset.openScene) openScene(t.dataset.openScene);
-  if (t.matches('[data-say-part]') && p) say(`${p.name}. ${p.desc.replace(/[⁻¹⁵ψ²]/g, ' ')}`);
+  if (t.matches('[data-say-part]') && p) say(partText(p));
   if (t.matches('[data-isolate]') && p) { viewer.isolate(p.id); renderParts(); toast('Изолировано · «Показать все» вернёт остальное'); }
   if (t.matches('[data-hide]') && p) { viewer.toggleHidden(p.id); viewer.select(null, { focus: false }); }
   if (t.dataset.step && p) { const i = s.parts.indexOf(p); viewer.select(s.parts[(i + +t.dataset.step + s.parts.length) % s.parts.length].id); }
@@ -253,7 +254,7 @@ $('#concept-grid').innerHTML = CONCEPTS.map((c, i) => `
   </article>`).join('');
 $('#concept-grid').addEventListener('click', e => {
   const listen = e.target.closest('[data-listen]'), show = e.target.closest('[data-show]');
-  if (listen) { e.stopPropagation(); const c = CONCEPTS.find(x => x.id === listen.dataset.listen); return say(`${c.title}. ${c.text}`, listen.closest('.concept')); }
+  if (listen) { e.stopPropagation(); const c = CONCEPTS.find(x => x.id === listen.dataset.listen); return say(conceptText(c), listen.closest('.concept')); }
   if (show) { e.stopPropagation(); const c = CONCEPTS.find(x => x.id === show.dataset.show); $('#atlas').scrollIntoView(); return openScene(c.scene, c.part); }
   const card = e.target.closest('.concept'); if (card) card.classList.toggle('open');
 });
@@ -278,7 +279,7 @@ $('#era-bar').addEventListener('click', e => {
 $('#timeline').addEventListener('click', e => {
   const b = e.target.closest('[data-hist]'); if (!b) return;
   const h = HISTORY[+b.dataset.hist];
-  say(`${h.year} год. ${h.name}. ${h.title}. ${h.text}`, b.closest('.event'));
+  say(historyText(h), b.closest('.event'));
 });
 
 $$('.reveal').forEach(el => revealObs.observe(el));
@@ -315,7 +316,7 @@ $('#quiz-box').addEventListener('click', e => {
   const o = e.target.closest('[data-opt]'); if (o) return answer(+o.dataset.opt);
   if (e.target.closest('[data-nextq]')) { quiz.i++; renderQuiz(); }
   if (e.target.closest('[data-restart]')) { Object.assign(quiz, { i: 0, score: 0 }); renderQuiz(); }
-  if (e.target.closest('[data-readq]')) { const q = QUIZ[quiz.i]; say(`${q.q} ${q.a.map((a, k) => `Вариант ${k + 1}: ${a}.`).join(' ')}`); }
+  if (e.target.closest('[data-readq]')) { const q = QUIZ[quiz.i]; say(quizText(q)); }
 });
 renderQuiz();
 
@@ -360,12 +361,14 @@ $('#g-mute').addEventListener('click', () => {
   if (voice.muted) voice.synth?.cancel();
   toast(voice.muted ? 'Гид без звука, только субтитры' : 'Звук гида включён');
 });
-$('#voice-rate').addEventListener('input', e => { voice.rate = +e.target.value; $('#rate-out').textContent = voice.rate.toFixed(1) + '×'; });
+$('#voice-rate').addEventListener('input', e => { voice.setRate(+e.target.value); $('#rate-out').textContent = voice.rate.toFixed(1) + '×'; });
 $('#auto-advance').addEventListener('change', e => { tour.auto = e.target.checked; });
 
 function fillVoices(list) {
   const sel = $('#voice-select');
-  sel.innerHTML = list.length ? list.map(v => `<option value="${esc(v.name)}" ${v === voice.voice ? 'selected' : ''}>${esc(v.name)} (${v.lang})</option>`).join('') : '<option>Системный голос</option>';
+  const nat = voice.hasNatural ? `<option value="__natural" ${voice.natural ? 'selected' : ''}>✨ Естественный голос гида (OmniVoice)</option>` : '';
+  const br = list.map(v => `<option value="${esc(v.name)}" ${!voice.natural && v === voice.voice ? 'selected' : ''}>${esc(v.name)} (${v.lang})</option>`).join('');
+  sel.innerHTML = nat + (br || (nat ? '' : '<option>Системный голос</option>'));
 }
 voice.onvoices = fillVoices; fillVoices(voice.voices);
 $('#voice-select').addEventListener('change', e => voice.setVoice(e.target.value));

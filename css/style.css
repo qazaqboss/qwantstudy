@@ -391,3 +391,4 @@ input[type=range]::-moz-range-thumb { width: 14px; height: 14px; border: 0; bord
 }
 
 .btn.wide { width: 100%; justify-content: center; white-space: normal; text-align: center; }
+.footer a { color: var(--cyan); }
