@@ -65,7 +65,7 @@ def build(args):
     manifest_path = os.path.join(OUT_DIR, "manifest.json")
     manifest = json.load(open(manifest_path)) if os.path.exists(manifest_path) else {}
     items = json.load(open(args.texts))
-    items.sort(key=lambda x: len(x["spoken"]))
+    # порядок из list-texts: сначала тур, затем сцены, понятия, история, структуры, тест
     if args.only:
         keys = set(args.only.split(','))
         items = [x for x in items if x['key'] in keys]
