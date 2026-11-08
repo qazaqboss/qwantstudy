@@ -1,4 +1,6 @@
 import { spoken, clipKey } from './speech.js';
+
+const SILENT = 'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAIA+AAACABAAZGF0YQAAAAA=';
 // Голосовой гид: озвучка (Web Speech Synthesis), тур по атласу и голосовые команды (Speech Recognition).
 
 export class Voice {
@@ -12,6 +14,19 @@ export class Voice {
     // Естественный голос: заранее озвученные моделью OmniVoice фразы (audio/voice/*.mp3).
     this.clips = {};
     this.natural = localStorageGet('qs-voice') !== 'browser' || !this.synth;
+    // Один плеер на весь сайт: iOS/Android разрешают программный запуск только элементу,
+    // который уже играл после касания. Разблокируем его при первом жесте пользователя.
+    this.el = new Audio(); this.el.preload = 'auto'; this.el.preservesPitch = true;
+    const unlock = () => {
+      ['pointerdown', 'touchend', 'keydown'].forEach(ev => document.removeEventListener(ev, unlock, true));
+      if (!this._audio) {
+        this.el.src = SILENT;
+        this.el.play().then(() => { if (this.el.src === SILENT) this.el.pause(); }).catch(() => {});
+      }
+      // iOS также требует первый вызов речи браузера внутри жеста
+      try { if (this.synth && !this.synth.speaking) { const u = new SpeechSynthesisUtterance(' '); u.volume = 0; this.synth.speak(u); } } catch { /* нет речи */ }
+    };
+    ['pointerdown', 'touchend', 'keydown'].forEach(ev => document.addEventListener(ev, unlock, true));
     this.ready = fetch('audio/voice/manifest.json').then(r => r.ok ? r.json() : {}).then(m => { this.clips = m; this.onvoices?.(this.voices); }).catch(() => {});
     if (this.synth) {
       const load = () => {
@@ -35,47 +50,57 @@ export class Voice {
     this.voice = this.voices.find(v => v.name === name) || this.voice; localStorageSet('qs-browser-voice', name);
   }
   clipFor(text) { const k = clipKey(text); return this.natural && this.clips[k] ? `audio/voice/${k}.mp3` : null; }
-  preload(text) { const src = text && this.clipFor(text); if (src) { const a = new Audio(); a.preload = 'auto'; a.src = src; } }
+  preload(text) { const src = text && this.clipFor(text); if (src) fetch(src).catch(() => {}); }
 
   // Озвучивает текст; onword отдаёт индекс текущего слова для подсветки субтитров.
   speak(text, { onend, onword } = {}) {
     this.stop();
     const words = text.split(/\s+/).filter(Boolean);
-    if (this.muted) {
-      // без звука — имитируем время чтения, чтобы тур шёл дальше
-      let i = 0;
-      this._timer = setInterval(() => { onword?.(i++); if (i > words.length) { clearInterval(this._timer); onend?.(); } }, 330 / this.rate);
-      return;
-    }
+    clearTimeout(this._silentT);
+    if (this.muted) return this.timed(words, onend, onword);
     const src = this.clipFor(text);
     if (src) return this.playClip(src, text, words, onend, onword);
     this.speakBrowser(text, words, onend, onword);
   }
 
+  // без звука — субтитры идут со скоростью чтения, чтобы тур шёл дальше
+  timed(words, onend, onword) {
+    let i = 0;
+    clearInterval(this._timer);
+    this._timer = setInterval(() => { onword?.(i++); if (i > words.length) { clearInterval(this._timer); onend?.(); } }, 330 / this.rate);
+  }
+
   playClip(src, text, words, onend, onword) {
-    const a = new Audio(src);
-    a.playbackRate = this.rate; a.preservesPitch = true;
+    const a = this.el;
+    const token = this._token = (this._token || 0) + 1;
+    const live = () => this._token === token;
     this._audio = a;
+    a.src = src; a.playbackRate = this.rate; a.preservesPitch = true;
     // слово по доле прочитанных символов
     const cum = []; let acc = 0; words.forEach(w => { acc += w.length + 1; cum.push(acc); });
     let last = -1;
     const tick = () => {
-      if (this._audio !== a) return;
+      if (!live()) return;
       if (a.duration) {
-        const pos = (a.currentTime / a.duration) * acc;
-        const idx = cum.findIndex(c => c >= pos);
+        const idx = cum.findIndex(c => c >= (a.currentTime / a.duration) * acc);
         if (idx !== last) { last = idx; onword?.(idx); }
       }
       if (!a.paused && !a.ended) this._raf = requestAnimationFrame(tick);
     };
-    a.addEventListener('play', () => { cancelAnimationFrame(this._raf); tick(); });
-    a.addEventListener('ended', () => { if (this._audio === a) { this._audio = null; onword?.(words.length); onend?.(); } });
-    a.addEventListener('error', () => { if (this._audio === a) { this._audio = null; this.speakBrowser(text, words, onend, onword); } });
-    a.play().catch(() => { if (this._audio === a) { this._audio = null; this.speakBrowser(text, words, onend, onword); } });
+    const fail = () => { if (!live()) return; this._audio = null; this.onerror?.(); this.speakBrowser(text, words, onend, onword); };
+    a.onplay = () => { if (live()) { cancelAnimationFrame(this._raf); tick(); } };
+    a.onended = () => { if (live()) { this._audio = null; onword?.(words.length); onend?.(); } };
+    a.onerror = fail;
+    a.play().catch(e => { if (e.name !== 'AbortError') fail(); });
   }
 
   speakBrowser(text, words, onend, onword) {
-    if (!this.synth) { onend?.(); return; }
+    if (!this.synth) { this.onsilent?.(); onend?.(); return; }
+    // если браузер молчит (нет русского голоса), сообщаем и продолжаем по таймеру субтитров
+    clearTimeout(this._silentT);
+    this._silentT = setTimeout(() => {
+      if (this._u && !this.synth.speaking) { this._u = null; this.synth.cancel(); this.onsilent?.(); this.timed(words, onend, onword); }
+    }, 2500);
     const say = spoken(text);
     const u = new SpeechSynthesisUtterance(say);
     u.lang = this.voice?.lang || 'ru-RU';
@@ -85,6 +110,7 @@ export class Voice {
       if (e.name && e.name !== 'word') return;
       onword?.(Math.round(e.charIndex / say.length * words.length));
     };
+    u.onstart = () => clearTimeout(this._silentT);
     u.onend = () => { if (this._u === u) onend?.(); };
     this._u = u;
     // Chrome иногда «засыпает» на длинных фразах — подталкиваем
@@ -97,7 +123,8 @@ export class Voice {
   resume() { if (this._audio) this._audio.play(); else this.synth?.resume(); }
   get canResume() { return (this._audio && this._audio.paused && !this._audio.ended) || !!(this.synth?.paused && this.synth?.speaking); }
   stop() {
-    clearInterval(this._timer); clearInterval(this._keep); cancelAnimationFrame(this._raf);
+    clearInterval(this._timer); clearInterval(this._keep); clearTimeout(this._silentT); cancelAnimationFrame(this._raf);
+    this._token = (this._token || 0) + 1;
     if (this._audio) { this._audio.pause(); this._audio = null; }
     this._u = null;
     this.synth?.cancel();

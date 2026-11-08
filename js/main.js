@@ -371,6 +371,8 @@ function fillVoices(list) {
   sel.innerHTML = nat + (br || (nat ? '' : '<option>Системный голос</option>'));
 }
 voice.onvoices = fillVoices; fillVoices(voice.voices);
+let silentWarned = false;
+voice.onsilent = () => { if (!silentWarned) { silentWarned = true; toast('Для этой фразы нет озвучки, а голос браузера недоступен: показываю субтитры'); } };
 $('#voice-select').addEventListener('change', e => voice.setVoice(e.target.value));
 
 /* ───────── голосовые команды ───────── */
