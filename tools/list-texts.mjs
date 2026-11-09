@@ -7,7 +7,7 @@ import { ALL_LESSONS } from '../js/course-data.js';
 
 const src = ['scenes.js', 'scenes-course.js'].map(f => readFileSync(new URL('../js/' + f, import.meta.url), 'utf8')).join('\n');
 const parts = [...src.matchAll(/\{ id: '([^']+)',[^\n]*?name: '([^']+)',[^\n]*?desc: '([^']+)' \}/g)].map(m => ({ id: m[1], name: m[2], desc: m[3] }));
-const scenes = [...src.matchAll(/\{ id: '([^']+)', name: '([^']+)', sub: '[^']+', camera:[^\n]*?(?:intro: '([^']+)')?[^\n]*\}/g)].map(m => ({ id: m[1], name: m[2], intro: m[3] }));
+const scenes = [...src.matchAll(/\{ id: '([^']+)', name: '([^']+)', sub: '[^']+', camera:[^\n]*\}/g)].map(m => ({ id: m[1], name: m[2], intro: (m[0].match(/intro: '([^']+)'/) || [])[1] }));
 
 const texts = [
   ...TOUR.map(s => s.text),
